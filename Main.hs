@@ -49,7 +49,7 @@ parseConstantPool n = do
     tag  <- getWord8
     info <- parseConstant tag
     rest <- parseConstantPool (n - 1)
-    return $ (CP_Info tag info):rest
+    return $ CP_Info tag info : rest
 
 parseConstant :: Integral a => a -> Get Constant
 parseConstant 1  = do
@@ -80,7 +80,7 @@ parseFields n = do
     ac   <- getWord16be
     atts <- parseAttributes ac
     rest <- parseFields (n - 1)
-    return $ (Field_Info af ni di ac atts):rest
+    return $ Field_Info af ni di ac atts : rest
 
 parseMethods :: Integral a => a -> Get [Method_Info]
 parseMethods 0 = return []
@@ -91,7 +91,7 @@ parseMethods n = do
     ac   <- getWord16be
     atts <- parseAttributes ac
     rest <- parseMethods (n - 1)
-    return $ (Method_Info af ni di ac atts):rest
+    return $ Method_Info af ni di ac atts : rest
 
 parseAttributes :: Integral a => a -> Get [Attribute_Info]
 parseAttributes 0 = return []
@@ -100,10 +100,10 @@ parseAttributes n = do
     len  <- getWord32be
     info <- getLazyByteString (fromIntegral len :: Int64)
     rest <- parseAttributes (n - 1)
-    return $ (Attribute_Info ni len (B.unpack info)):rest
+    return $ Attribute_Info ni len (B.unpack info) : rest
 
 showBytes :: B.ByteString -> String
 showBytes s = concatMap (`showHex` "") (B.unpack s)
 
 bytesToInt :: B.ByteString -> Int
-bytesToInt s = read $ '0':'x':(showBytes s)
+bytesToInt s = read $ '0' : 'x' : showBytes s

@@ -24,8 +24,8 @@ data ClassFile = ClassFile
 --    } deriving (Show)
 
 data CP_Info = CP_Info
-    { tag     :: Word8
-    , ci_info :: Constant
+    { ci_tag     :: Word8
+    , ci_info    :: Constant
     } deriving (Show)
 
 data Constant = C_Utf8 { utf8_length :: Word16
@@ -85,15 +85,15 @@ data Method_Info = Method_Info
 data Attribute_Info = Attribute_Info
     { ai_attribute_name_index :: Word16
     , ai_attribute_length     :: Word32
-    , ai_info              :: [Word8] -- TODO: Fix this
+    , ai_info                 :: Attribute
     } deriving (Show)
 
 data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
 
-               | A_Code { max_stack :: Word16
-                        , max_locals :: Word16
-                        , code_length     :: Word32
-                        , code            :: [Word8]
+               | A_Code { max_stack              :: Word16
+                        , max_locals             :: Word16
+                        , code_length            :: Word32
+                        , code                   :: [Word8]
                         , exception_table_length :: Word16
                         , exception_table        :: [Exception_Table]
                         , code_attributes_count  :: Word16
@@ -102,6 +102,42 @@ data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
                | A_StackMapTable { number_of_entries :: Word16
                                  , entries           :: [StackMapFrame] }
 
+               | A_Exceptions { number_of_exceptions  :: Word16
+                              , exception_index_table :: [Word16]
+                              }
+
+               | A_InnerClasses { number_of_classes :: Word16
+                                , classes           :: [InnerClass]
+                                }
+
+               | A_EnclosingMethod { class_index  :: Word16
+                                   , method_index :: Word16
+                                   }
+
+               | A_Synthetic
+
+               | A_Signature { signature_index :: Word16 }
+
+               | A_SourceFile { sourcefile_index :: Word16 }
+
+               | A_SourceDebugExtension { debug_extension :: B.ByteString }
+
+               | A_LineNumberTable { line_number_table_length :: Word16
+                                   , line_number_table        :: [LineNumberEntry]
+                                   }
+
+               | A_LocalVariableTable { local_variable_table_length :: Word16
+                                      , local_variable_table        :: [LocalVariableEntry]
+                                      }
+
+               | A_LocalVariableTypeTable { local_variable_type_table_length :: Word16
+                                          , local_variable_type_table        :: [LocalVariableTypeEntry]
+                                          }
+
+               | 
+
+
+
 data Exception_Table = Exception_Table
     { start_pc   :: Word16
     , end_pc     :: Word16
@@ -109,4 +145,56 @@ data Exception_Table = Exception_Table
     , catch_type :: Word16
     } deriving (Show)
 
-data Verification_Type_Info =
+data Stack_Map_Frame = Stack_Map_Frame
+    { smf_tag               :: Stack_Map_Frame_Tag
+    , offset_delta          :: Word16
+    , number_of_locals      :: Word16
+    , locals                :: [Verification_Type_Info]
+    , number_of_stack_items :: Word16
+    , stack                 :: [Verification_Type_Info]
+    } deriving (Show)
+
+data Stack_Map_Frame_Tag = Same
+                         | Same_Locals_1_Stack_Item
+                         | Same_Locals_1_Stack_Item_Extended
+                         | Chop
+                         | Same_Extended
+                         | Append
+                         | Full
+
+data Verification_Type_Info = Verification_Type_Info
+    { vti_tag      :: Verification_Type_Info_tag
+    , vti_info     :: Word16 -- cpool_index for Object, or offset for Uninitialized
+
+data Verification_Type_Info_tag = Top
+                                | Integer
+                                | Float
+                                | Double
+                                | Long
+                                | Null
+                                | UninitializedThis
+                                | Object
+                                | Uninitialized
+                                deriving (Enum)
+
+data InnerClass = InnerClass
+    { inner_class_info_index   :: Word16
+    , outer_class_info_index   :: Word16
+    , inner_name_index         :: Word16
+    , inner_class_access_flags :: Word16
+    } deriving (Show)
+
+data LineNumberEntry = LineNumberEntry
+    { lne_start_pc    :: Word16
+    , lne_line_number :: Word16
+    } deriving (Show)
+
+data LocalVariableEntry = LocalVariableEntry
+    { lve_start_pc         :: Word16
+    , lve_length           :: Word16
+    , lve_name_index       :: Word16
+    , lve_descriptor_index :: Word16
+    , lve_index            :: Word16
+    } deriving (Show)
+
+data LocalVariableTypeEntry = LocalVariableTypeEntry
