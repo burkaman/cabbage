@@ -98,9 +98,13 @@ parseAttributes 0 = return []
 parseAttributes n = do
     ni   <- getWord16be
     len  <- getWord32be
-    info <- getLazyByteString (fromIntegral len :: Int64)
+    --info <- getLazyByteString (fromIntegral len :: Int64)
+    info <- parseAttribute
     rest <- parseAttributes (n - 1)
-    return $ Attribute_Info ni len (B.unpack info) : rest
+    return $ Attribute_Info ni len info : rest
+
+parseAttribute :: Get Attribute
+parseAttribute = undefined
 
 showBytes :: B.ByteString -> String
 showBytes s = concatMap (`showHex` "") (B.unpack s)
