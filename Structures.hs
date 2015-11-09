@@ -92,7 +92,7 @@ data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
                | A_Code { max_stack              :: Word16
                         , max_locals             :: Word16
                         , code_length            :: Word32
-                        , code                   :: [Word8]
+                        , code                   :: B.ByteString
                         , exception_table_length :: Word16
                         , exception_table        :: [Exception_Table]
                         , code_attributes_count  :: Word16
@@ -147,7 +147,8 @@ data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
                | A_MethodParameters { parameters_count :: Word8
                                     , parameters       :: [Parameter] }
 
-               | A_Other { attribute_info :: [Word8] }
+               | A_Other { attribute_name :: B.ByteString
+                         , attribute_info :: [Word8] }
                deriving (Show)
 
 
