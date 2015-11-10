@@ -94,7 +94,7 @@ data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
                         , code_length            :: Word32
                         , code                   :: B.ByteString
                         , exception_table_length :: Word16
-                        , exception_table        :: [Exception_Table]
+                        , exception_table        :: [ExceptionTableEntry]
                         , code_attributes_count  :: Word16
                         , code_attributes        :: [Attribute_Info] }
 
@@ -153,7 +153,7 @@ data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
 
 
 
-data Exception_Table = Exception_Table
+data ExceptionTableEntry = ExceptionTableEntry
     { start_pc   :: Word16
     , end_pc     :: Word16
     , handler_pc :: Word16

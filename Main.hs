@@ -5,16 +5,20 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString.Lazy.Char8 as C
 import           Data.Word
 
+import Debug.Trace
+
 import GHC.Int
+import GHC.Stack
 
 import Numeric
 
 import Structures
 
-main :: IO ClassFile
+main :: IO ()
 main = do
     file <- B.readFile "test/HelloWorld.class"
-    return $ runGet parseFile file
+    let cl = runGet parseFile file
+    putStrLn $ show cl
 
 parseFile :: Get ClassFile
 parseFile = do
@@ -72,8 +76,8 @@ parseConstant 18 = C_InvokeDynamic <$> getWord16be <*> getWord16be
 parseConstant x  = undefined
 
 lookupConstant :: Integral a => [CP_Info] -> a -> Constant
-lookupConstant cp index = if intdex > length cp then error $ (show intdex) ++ " is not a valid constant pool index"
-                                               else ci_info $ cp !! intdex
+lookupConstant cp index = if intdex > length cp then errorWithStackTrace $ (show intdex) ++ " is not a valid constant pool index"
+                                               else ci_info $ cp !! (intdex - 1)
     where intdex = fromIntegral index :: Int
 
 parseFields :: Integral a => [CP_Info] -> a -> Get [Field_Info]
@@ -120,31 +124,34 @@ parseAttribute cp (C_Utf8 _ str) = case str of
                                          cac  <- getWord16be
                                          ca   <- parseAttributes cp cac
                                          return $ A_Code ms ml cl code etl et cac ca
-                                     "StackMapTable" -> error $ B.unpack str
-                                     "Exceptions" -> error $ B.unpack str
-                                     "InnerClasses" -> error $ B.unpack str
-                                     "EnclosingMethod" -> error $ B.unpack str
-                                     "Synthetic" -> error $ B.unpack str
-                                     "Signature" -> error $ B.unpack str
-                                     "SourceFile" -> error $ B.unpack str
-                                     "SourceDebugExtension" -> error $ B.unpack str
-                                     "LineNumberTable" -> error $ B.unpack str
-                                     "LocalVariableTable" -> error $ B.unpack str
-                                     "LocalVariableTypeTable" -> error $ B.unpack str
-                                     "Deprecated" -> error $ B.unpack str
-                                     "RuntimeVisibleAnnotations" -> error $ B.unpack str
-                                     "RuntimeInvisibleAnnotations" -> error $ B.unpack str
-                                     "RuntimeVisibleParameterAnnotations" -> error $ B.unpack str
-                                     "RuntimeInvisibleParameterAnnotations" -> error $ B.unpack str
-                                     "RuntimeVisibleTypeAnnotations" -> error $ B.unpack str
-                                     "RuntimeInvisibleTypeAnnotations" -> error $ B.unpack str
-                                     "AnnotationDefault" -> error $ B.unpack str
-                                     "BootstrapMethods" -> error $ B.unpack str
-                                     "MethodParameters" -> error $ B.unpack str
-                                     _ -> error $ B.unpack str
-parseAttribute _  _              = error "Attribute name index did not point to Utf8 constant"
+                                     "StackMapTable" -> errorWithStackTrace $ show str
+                                     "Exceptions" -> errorWithStackTrace $ show str
+                                     "InnerClasses" -> errorWithStackTrace $ show str
+                                     "EnclosingMethod" -> errorWithStackTrace $ show str
+                                     "Synthetic" -> errorWithStackTrace $ show str
+                                     "Signature" -> errorWithStackTrace $ show str
+                                     "SourceFile" -> A_SourceFile <$> getWord16be
+                                     "SourceDebugExtension" -> errorWithStackTrace $ show str
+                                     "LineNumberTable" -> do
+                                         len <- getWord16be
+                                         lnt <- parseLineNumberTable len
+                                         return $ A_LineNumberTable len lnt
+                                     "LocalVariableTable" -> errorWithStackTrace $ show str
+                                     "LocalVariableTypeTable" -> errorWithStackTrace $ show str
+                                     "Deprecated" -> errorWithStackTrace $ show str
+                                     "RuntimeVisibleAnnotations" -> errorWithStackTrace $ show str
+                                     "RuntimeInvisibleAnnotations" -> errorWithStackTrace $ show str
+                                     "RuntimeVisibleParameterAnnotations" -> errorWithStackTrace $ show str
+                                     "RuntimeInvisibleParameterAnnotations" -> errorWithStackTrace $ show str
+                                     "RuntimeVisibleTypeAnnotations" -> errorWithStackTrace $ show str
+                                     "RuntimeInvisibleTypeAnnotations" -> errorWithStackTrace $ show str
+                                     "AnnotationDefault" -> errorWithStackTrace $ show str
+                                     "BootstrapMethods" -> errorWithStackTrace $ show str
+                                     "MethodParameters" -> errorWithStackTrace $ show str
+                                     _ -> errorWithStackTrace $ show str
+parseAttribute _  c              = errorWithStackTrace $ "Attribute name index did not point to Utf8 constant. Constant: " ++ (show c)
 
-parseExceptionTable :: Integral a => a -> Get [Exception_Table]
+parseExceptionTable :: Integral a => a -> Get [ExceptionTableEntry]
 parseExceptionTable 0 = return []
 parseExceptionTable n = do
     sp   <- getWord16be
@@ -152,7 +159,15 @@ parseExceptionTable n = do
     hp   <- getWord16be
     ct   <- getWord16be
     rest <- parseExceptionTable (n - 1)
-    return $ Exception_Table sp ep hp ct : rest
+    return $ ExceptionTableEntry sp ep hp ct : rest
+
+parseLineNumberTable :: Integral a => a -> Get [LineNumberEntry]
+parseLineNumberTable 0 = return []
+parseLineNumberTable n = do
+    sp   <- getWord16be
+    ln   <- getWord16be
+    rest <- parseLineNumberTable (n - 1)
+    return $ LineNumberEntry sp ln : rest
 
 showBytes :: B.ByteString -> String
 showBytes s = concatMap (`showHex` "") (B.unpack s)
