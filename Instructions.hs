@@ -1,159 +1,219 @@
 module Instructions where
 
 import qualified Data.ByteString.Lazy as B
+import           Data.Word
+
 
 data Instruction = Instruction
-    { operation :: Operation
+    { operation :: String
     , input     :: [Int]
     } deriving (Show)
 
-data Operation = AALOAD
-               | AASTORE
-               | ACONST_NULL
-               | ALOAD
-               | ALOAD_N
-               | ANEWARRAY
-               | ARETURN
-               | ARRAYLENGTH
-               | ASTORE
-               | ASTORE_N
-               | ATHROW
-               | BALOAD
-               | BASTORE
-               | BIPUSH
-               | CALOAD
-               | CASTORE
-               | CHECKCAST
-               | D2I
-               | D2F
-               | D2L
-               | DADD
-               | DALOAD
-               | DASTORE
-               | DCMPOP
-               | DCONST_D
-               | DDIV
-               | DLOAD
-               | DLOAD_N
-               | DMUL
-               | DNEQ
-               | DREM
-               | DRETURN
-               | DSTORE
-               | DSTORE_N
-               | DSUB
-               | DUP
-               | DUP_X1
-               | DUP_X2
-               | DUP2
-               | DUP2_X1
-               | DUP2_X2
-               | F2D
-               | F2I
-               | F2L
-               | FADD
-               | FALOAD
-               | FASTORE
-               | FCMPOP
-               | FCONST_F
-               | FDIV
-               | FLOAD
-               | FLOAD_N
-               | FMUL
-               | FNEQ
-               | FREM
-               | FRETURN
-               | FSTORE
-               | FSTORE_N
-               | FSUB
-               | GETFIELD
-               | GETSTATIC
-               | GOTO
-               | GOTO_W
-               | I2B
-               | I2C
-               | I2D
-               | I2F
-               | I2L
-               | I2S
-               | IADD
-               | IALOAD
-               | IAND
-               | IASTORE
-               | ICONST_I
-               | IDIV
-               | IF_ACMP_COND
-               | IF_ICMP_COND
-               | IF_COND
-               | IFNONNULL
-               | IFNULL
-               | IINC
-               | ILOAD
-               | ILOAD_N
-               | IMUL
-               | INEQ
-               | INSTANCEOF
-               | INVOKEDYNAMIC
-               | INVOKEINTERFACE
-               | INVOKESPECIAL
-               | INVOKESTATIC
-               | INVOKEVIRTUAL
-               | IOR
-               | IREM
-               | IRETURN
-               | ISHL
-               | ISHR
-               | ISTORE
-               | ISTORE_N
-               | ISUB
-               | IUSHR
-               | IXOR
-               | JSR
-               | JSR_W
-               | L2D
-               | L2F
-               | L2I
-               | LADD
-               | LALOAD
-               | LAND
-               | LASTORE
-               | LCMP
-               | LCONST_L
-               | LDC
-               | LDC_W
-               | LDC2_W
-               | LDIV
-               | LLOAD
-               | LLOAD_N
-               | LMUL
-               | LNEQ
-               | LOOKUPSWITCH
-               | LOR
-               | LREM
-               | LRETURN
-               | LSHL
-               | LSHR
-               | LSTORE
-               | LSTORE_N
-               | LSUB
-               | LUSHR
-               | LXOR
-               | MONITORENTER
-               | MONITOREXIT
-               | MULTIANEWARRAY
-               | NEW
-               | NEWARRAY
-               | NOP
-               | POP
-               | POP2
-               | PUTFIELD
-               | PUTSTATIC
-               | RET
-               | RETURN
-               | SALOAD
-               | SASTORE
-               | SIPUSH
-               | SWAP
-               | TABLESWITCH
-               | WIDE
-               deriving (Eq, Show)
+parseCode :: [Word8] -> [Instruction]
+parseCode []        = []
+parseCode (op:code) = Instruction (byteToOp op) [] : parseCode code
+
+byteToOp :: Word8 -> String
+byteToOp 0x32 = "aaload"
+byteToOp 0x53 = "aastore"
+byteToOp 0x1  = "aconst_null"
+byteToOp 0x19 = "aload"
+byteToOp 0x2a = "aload_0"
+byteToOp 0x2b = "aload_1"
+byteToOp 0x2c = "aload_2"
+byteToOp 0x2d = "aload_3"
+byteToOp 0xbd = "anewarray"
+byteToOp 0xb0 = "areturn"
+byteToOp 0xbe = "arraylength"
+byteToOp 0x3a = "astore"
+byteToOp 0x4b = "astore_0"
+byteToOp 0x4c = "astore_1"
+byteToOp 0x4d = "astore_2"
+byteToOp 0x4e = "astore_3"
+byteToOp 0xbf = "athrow"
+byteToOp 0x33 = "baload"
+byteToOp 0x54 = "bastore"
+byteToOp 0x10 = "bipush"
+byteToOp 0x34 = "caload"
+byteToOp 0x55 = "castore"
+byteToOp 0xc0 = "checkcast"
+byteToOp 0x90 = "d2f"
+byteToOp 0x8e = "d2i"
+byteToOp 0x8f = "d2l"
+byteToOp 0x63 = "dadd"
+byteToOp 0x31 = "daload"
+byteToOp 0x52 = "dastore"
+byteToOp 0x98 = "dcmpg"
+byteToOp 0x97 = "dcmpl"
+byteToOp 0xe  = "dconst_0"
+byteToOp 0xf  = "dconst_1"
+byteToOp 0x6f = "ddiv"
+byteToOp 0x18 = "dload"
+byteToOp 0x26 = "dload_0"
+byteToOp 0x27 = "dload_1"
+byteToOp 0x28 = "dload_2"
+byteToOp 0x29 = "dload_3"
+byteToOp 0x6b = "dmul"
+byteToOp 0x77 = "dneg"
+byteToOp 0x73 = "drem"
+byteToOp 0xaf = "dreturn"
+byteToOp 0x39 = "dstore"
+byteToOp 0x47 = "dstore_0"
+byteToOp 0x48 = "dstore_1"
+byteToOp 0x49 = "dstore_2"
+byteToOp 0x4a = "dstore_3"
+byteToOp 0x67 = "dsub"
+byteToOp 0x59 = "dup"
+byteToOp 0x5a = "dup_x1"
+byteToOp 0x5b = "dup_x2"
+byteToOp 0x5c = "dup2"
+byteToOp 0x5d = "dup2_x1"
+byteToOp 0x5e = "dup2_x2"
+byteToOp 0x8d = "f2d"
+byteToOp 0x8b = "f2i"
+byteToOp 0x8c = "f2l"
+byteToOp 0x62 = "fadd"
+byteToOp 0x30 = "faload"
+byteToOp 0x51 = "fastore"
+byteToOp 0x96 = "fcmpg"
+byteToOp 0x95 = "fcmpl"
+byteToOp 0xb  = "fconst_0"
+byteToOp 0xc  = "fconst_1"
+byteToOp 0xd  = "fconst_2"
+byteToOp 0x6e = "fdiv"
+byteToOp 0x17 = "fload"
+byteToOp 0x22 = "fload_0"
+byteToOp 0x23 = "fload_1"
+byteToOp 0x24 = "fload_2"
+byteToOp 0x25 = "fload_3"
+byteToOp 0x6a = "fmul"
+byteToOp 0x76 = "fneg"
+byteToOp 0x72 = "frem"
+byteToOp 0xae = "freturn"
+byteToOp 0x38 = "fstore"
+byteToOp 0x43 = "fstore_0"
+byteToOp 0x44 = "fstore_1"
+byteToOp 0x45 = "fstore_2"
+byteToOp 0x46 = "fstore_3"
+byteToOp 0x66 = "fsub"
+byteToOp 0xb4 = "getfield"
+byteToOp 0xb2 = "getstatic"
+byteToOp 0xa7 = "goto"
+byteToOp 0xc8 = "goto_w"
+byteToOp 0x91 = "i2b"
+byteToOp 0x92 = "i2c"
+byteToOp 0x87 = "i2d"
+byteToOp 0x86 = "i2f"
+byteToOp 0x85 = "i2l"
+byteToOp 0x93 = "i2s"
+byteToOp 0x60 = "iadd"
+byteToOp 0x2e = "iaload"
+byteToOp 0x7e = "iand"
+byteToOp 0x4f = "iastore"
+byteToOp 0x2  = "iconst_m1"
+byteToOp 0x3  = "iconst_0"
+byteToOp 0x4  = "iconst_1"
+byteToOp 0x5  = "iconst_2"
+byteToOp 0x6  = "iconst_3"
+byteToOp 0x7  = "iconst_4"
+byteToOp 0x8  = "iconst_5"
+byteToOp 0x6c = "idiv"
+byteToOp 0xa5 = "if_acmpeq"
+byteToOp 0xa6 = "if_acmpne"
+byteToOp 0x9f = "if_icmpeq"
+byteToOp 0xa0 = "if_icmpne"
+byteToOp 0xa1 = "if_icmplt"
+byteToOp 0xa2 = "if_icmpge"
+byteToOp 0xa3 = "if_icmpgt"
+byteToOp 0xa4 = "if_icmple"
+byteToOp 0x99 = "ifeq"
+byteToOp 0x9a = "ifne"
+byteToOp 0x9b = "iflt"
+byteToOp 0x9c = "ifge"
+byteToOp 0x9d = "ifgt"
+byteToOp 0x9e = "ifle"
+byteToOp 0xc7 = "ifnonnull"
+byteToOp 0xc6 = "ifnull"
+byteToOp 0x84 = "iinc"
+byteToOp 0x15 = "iload"
+byteToOp 0x1a = "iload_0"
+byteToOp 0x1b = "iload_1"
+byteToOp 0x1c = "iload_2"
+byteToOp 0x1d = "iload_3"
+byteToOp 0x68 = "imul"
+byteToOp 0x74 = "ineg"
+byteToOp 0xc1 = "instanceof"
+byteToOp 0xba = "invokedynamic"
+byteToOp 0xb9 = "invokeinterface"
+byteToOp 0xb7 = "invokespecial"
+byteToOp 0xb8 = "invokestatic"
+byteToOp 0xb6 = "invokevirtual"
+byteToOp 0x80 = "ior"
+byteToOp 0x70 = "irem"
+byteToOp 0xac = "ireturn"
+byteToOp 0x78 = "ishl"
+byteToOp 0x7a = "ishr"
+byteToOp 0x36 = "istore"
+byteToOp 0x3b = "istore_0"
+byteToOp 0x3c = "istore_1"
+byteToOp 0x3d = "istore_2"
+byteToOp 0x3e = "istore_3"
+byteToOp 0x64 = "isub"
+byteToOp 0x7c = "iushr"
+byteToOp 0x82 = "ixor"
+byteToOp 0xa8 = "jsr"
+byteToOp 0xc9 = "jsr_w"
+byteToOp 0x8a = "l2d"
+byteToOp 0x89 = "l2f"
+byteToOp 0x88 = "l2i"
+byteToOp 0x61 = "ladd"
+byteToOp 0x2f = "laload"
+byteToOp 0x7f = "land"
+byteToOp 0x50 = "lastore"
+byteToOp 0x94 = "lcmp"
+byteToOp 0x9  = "lconst_0"
+byteToOp 0xa  = "lconst_1"
+byteToOp 0x12 = "ldc"
+byteToOp 0x13 = "ldc_w"
+byteToOp 0x14 = "ldc2_w"
+byteToOp 0x6d = "ldiv"
+byteToOp 0x16 = "lload"
+byteToOp 0x1e = "lload_0"
+byteToOp 0x1f = "lload_1"
+byteToOp 0x20 = "lload_2"
+byteToOp 0x21 = "lload_3"
+byteToOp 0x69 = "lmul"
+byteToOp 0x75 = "lneg"
+byteToOp 0xab = "lookupswitch"
+byteToOp 0x81 = "lor"
+byteToOp 0x71 = "lrem"
+byteToOp 0xad = "lreturn"
+byteToOp 0x79 = "lshl"
+byteToOp 0x7b = "lshr"
+byteToOp 0x37 = "lstore"
+byteToOp 0x3f = "lstore_0"
+byteToOp 0x40 = "lstore_1"
+byteToOp 0x41 = "lstore_2"
+byteToOp 0x42 = "lstore_3"
+byteToOp 0x65 = "lsub"
+byteToOp 0x7d = "lushr"
+byteToOp 0x83 = "lxor"
+byteToOp 0xc2 = "monitorenter"
+byteToOp 0xc3 = "monitorexit"
+byteToOp 0xc5 = "multianewarray"
+byteToOp 0xbb = "new"
+byteToOp 0xbc = "newarray"
+byteToOp 0x0  = "nop"
+byteToOp 0x57 = "pop"
+byteToOp 0x58 = "pop2"
+byteToOp 0xb5 = "putfield"
+byteToOp 0xb3 = "putstatic"
+byteToOp 0xa9 = "ret"
+byteToOp 0xb1 = "return"
+byteToOp 0x35 = "saload"
+byteToOp 0x56 = "sastore"
+byteToOp 0x11 = "sipush"
+byteToOp 0x5f = "swap"
+byteToOp 0xaa = "tableswitch"
+byteToOp 0xc4 = "wide"
+byteToOp b    = error "Unrecognized opcode: " ++ (show b)
