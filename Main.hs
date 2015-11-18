@@ -38,7 +38,7 @@ parseFile = do
     methds <- parseMethods cp mc
     ac     <- getWord16be
     atts   <- parseAttributes cp ac
-    return $ ClassFile magic minor major cpc cp afs tc sc intc ints fc fields mc methds ac atts
+    return $ ClassFile minor major cp afs tc sc ints fields methds atts
 
 getNWord16be :: Integral a => a -> Get [Word16]
 getNWord16be 0 = return []
@@ -53,13 +53,13 @@ parseConstantPool n = do
     tag  <- getWord8
     info <- parseConstant tag
     rest <- parseConstantPool (n - 1)
-    return $ CP_Info tag info : rest
+    return $ CP_Info info : rest
 
 parseConstant :: Integral a => a -> Get Constant
 parseConstant 1  = do
     len <- getWord16be
     str <- getLazyByteString (fromIntegral len :: Int64)
-    return $ C_Utf8 len str
+    return $ C_Utf8 str
 parseConstant 3  = C_Integer <$> getWord32be
 parseConstant 4  = C_Float <$> getWord32be
 parseConstant 5  = C_Long <$> getWord32be <*> getWord32be
@@ -89,7 +89,7 @@ parseFields cp n = do
     ac   <- getWord16be
     atts <- parseAttributes cp ac
     rest <- parseFields cp (n - 1)
-    return $ Field_Info af ni di ac atts : rest
+    return $ Field_Info af ni di atts : rest
 
 parseMethods :: Integral a => [CP_Info] -> a -> Get [Method_Info]
 parseMethods _  0 = return []
@@ -100,7 +100,7 @@ parseMethods cp n = do
     ac   <- getWord16be
     atts <- parseAttributes cp ac
     rest <- parseMethods cp (n - 1)
-    return $ Method_Info af ni di ac atts : rest
+    return $ Method_Info af ni di atts : rest
 
 parseAttributes :: Integral a => [CP_Info] -> a -> Get [Attribute_Info]
 parseAttributes _  0 = return []
@@ -109,10 +109,10 @@ parseAttributes cp n = do
     len  <- getWord32be
     info <- parseAttribute cp (lookupConstant cp ni)
     rest <- parseAttributes cp (n - 1)
-    return $ Attribute_Info ni len info : rest
+    return $ Attribute_Info ni info : rest
 
 parseAttribute :: [CP_Info] -> Constant -> Get Attribute
-parseAttribute cp (C_Utf8 _ str) = case str of
+parseAttribute cp (C_Utf8 str) = case str of
                                      "ConstantValue" -> A_ConstantValue <$> getWord16be
                                      "Code" -> do
                                          ms   <- getWord16be
@@ -123,7 +123,7 @@ parseAttribute cp (C_Utf8 _ str) = case str of
                                          et   <- parseExceptionTable etl
                                          cac  <- getWord16be
                                          ca   <- parseAttributes cp cac
-                                         return $ A_Code ms ml cl code etl et cac ca
+                                         return $ A_Code ms ml code et ca
                                      "StackMapTable" -> errorWithStackTrace $ show str
                                      "Exceptions" -> errorWithStackTrace $ show str
                                      "InnerClasses" -> errorWithStackTrace $ show str
@@ -135,7 +135,7 @@ parseAttribute cp (C_Utf8 _ str) = case str of
                                      "LineNumberTable" -> do
                                          len <- getWord16be
                                          lnt <- parseLineNumberTable len
-                                         return $ A_LineNumberTable len lnt
+                                         return $ A_LineNumberTable lnt
                                      "LocalVariableTable" -> errorWithStackTrace $ show str
                                      "LocalVariableTypeTable" -> errorWithStackTrace $ show str
                                      "Deprecated" -> errorWithStackTrace $ show str
