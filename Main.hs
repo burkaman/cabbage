@@ -13,6 +13,7 @@ import GHC.Stack
 import Numeric
 
 import Structures
+import ShowStructures
 
 main :: IO ()
 main = do
@@ -47,13 +48,13 @@ getNWord16be n = do
     rest <- getNWord16be (n - 1)
     return $ word:rest
 
-parseConstantPool :: Integral a => a -> Get [CP_Info]
+parseConstantPool :: Integral a => a -> Get Constant_Pool
 parseConstantPool 0 = return []
 parseConstantPool n = do
     tag  <- getWord8
     info <- parseConstant tag
     rest <- parseConstantPool (n - 1)
-    return $ CP_Info info : rest
+    return $ info : rest
 
 parseConstant :: Integral a => a -> Get Constant
 parseConstant 1  = do
@@ -75,12 +76,12 @@ parseConstant 16 = C_MethodType <$> getWord16be
 parseConstant 18 = C_InvokeDynamic <$> getWord16be <*> getWord16be
 parseConstant x  = undefined
 
-lookupConstant :: Integral a => [CP_Info] -> a -> Constant
-lookupConstant cp index = if intdex > length cp then errorWithStackTrace $ (show intdex) ++ " is not a valid constant pool index"
-                                               else ci_info $ cp !! (intdex - 1)
+lookupConstant :: Integral a => Constant_Pool -> a -> Constant
+lookupConstant cp index = if intdex > Prelude.length cp then error $ (show intdex) ++ " is not a valid constant pool index"
+                                               else cp !! (intdex - 1)
     where intdex = fromIntegral index :: Int
 
-parseFields :: Integral a => [CP_Info] -> a -> Get [Field_Info]
+parseFields :: Integral a => Constant_Pool -> a -> Get [Field_Info]
 parseFields _  0 = return []
 parseFields cp n = do
     af   <- getWord16be
@@ -91,7 +92,7 @@ parseFields cp n = do
     rest <- parseFields cp (n - 1)
     return $ Field_Info af ni di atts : rest
 
-parseMethods :: Integral a => [CP_Info] -> a -> Get [Method_Info]
+parseMethods :: Integral a => Constant_Pool -> a -> Get [Method_Info]
 parseMethods _  0 = return []
 parseMethods cp n = do
     af   <- getWord16be
@@ -102,7 +103,7 @@ parseMethods cp n = do
     rest <- parseMethods cp (n - 1)
     return $ Method_Info af ni di atts : rest
 
-parseAttributes :: Integral a => [CP_Info] -> a -> Get [Attribute_Info]
+parseAttributes :: Integral a => Constant_Pool -> a -> Get [Attribute_Info]
 parseAttributes _  0 = return []
 parseAttributes cp n = do
     ni   <- getWord16be
@@ -111,7 +112,7 @@ parseAttributes cp n = do
     rest <- parseAttributes cp (n - 1)
     return $ Attribute_Info ni info : rest
 
-parseAttribute :: [CP_Info] -> Constant -> Get Attribute
+parseAttribute :: Constant_Pool -> Constant -> Get Attribute
 parseAttribute cp (C_Utf8 str) = case str of
                                      "ConstantValue" -> A_ConstantValue <$> getWord16be
                                      "Code" -> do
@@ -124,32 +125,32 @@ parseAttribute cp (C_Utf8 str) = case str of
                                          cac  <- getWord16be
                                          ca   <- parseAttributes cp cac
                                          return $ A_Code ms ml code et ca
-                                     "StackMapTable" -> errorWithStackTrace $ show str
-                                     "Exceptions" -> errorWithStackTrace $ show str
-                                     "InnerClasses" -> errorWithStackTrace $ show str
-                                     "EnclosingMethod" -> errorWithStackTrace $ show str
-                                     "Synthetic" -> errorWithStackTrace $ show str
-                                     "Signature" -> errorWithStackTrace $ show str
+                                     "StackMapTable" -> error $ show str
+                                     "Exceptions" -> error $ show str
+                                     "InnerClasses" -> error $ show str
+                                     "EnclosingMethod" -> error $ show str
+                                     "Synthetic" -> error $ show str
+                                     "Signature" -> error $ show str
                                      "SourceFile" -> A_SourceFile <$> getWord16be
-                                     "SourceDebugExtension" -> errorWithStackTrace $ show str
+                                     "SourceDebugExtension" -> error $ show str
                                      "LineNumberTable" -> do
                                          len <- getWord16be
                                          lnt <- parseLineNumberTable len
                                          return $ A_LineNumberTable lnt
-                                     "LocalVariableTable" -> errorWithStackTrace $ show str
-                                     "LocalVariableTypeTable" -> errorWithStackTrace $ show str
-                                     "Deprecated" -> errorWithStackTrace $ show str
-                                     "RuntimeVisibleAnnotations" -> errorWithStackTrace $ show str
-                                     "RuntimeInvisibleAnnotations" -> errorWithStackTrace $ show str
-                                     "RuntimeVisibleParameterAnnotations" -> errorWithStackTrace $ show str
-                                     "RuntimeInvisibleParameterAnnotations" -> errorWithStackTrace $ show str
-                                     "RuntimeVisibleTypeAnnotations" -> errorWithStackTrace $ show str
-                                     "RuntimeInvisibleTypeAnnotations" -> errorWithStackTrace $ show str
-                                     "AnnotationDefault" -> errorWithStackTrace $ show str
-                                     "BootstrapMethods" -> errorWithStackTrace $ show str
-                                     "MethodParameters" -> errorWithStackTrace $ show str
-                                     _ -> errorWithStackTrace $ show str
-parseAttribute _  c              = errorWithStackTrace $ "Attribute name index did not point to Utf8 constant. Constant: " ++ (show c)
+                                     "LocalVariableTable" -> error $ show str
+                                     "LocalVariableTypeTable" -> error $ show str
+                                     "Deprecated" -> error $ show str
+                                     "RuntimeVisibleAnnotations" -> error $ show str
+                                     "RuntimeInvisibleAnnotations" -> error $ show str
+                                     "RuntimeVisibleParameterAnnotations" -> error $ show str
+                                     "RuntimeInvisibleParameterAnnotations" -> error $ show str
+                                     "RuntimeVisibleTypeAnnotations" -> error $ show str
+                                     "RuntimeInvisibleTypeAnnotations" -> error $ show str
+                                     "AnnotationDefault" -> error $ show str
+                                     "BootstrapMethods" -> error $ show str
+                                     "MethodParameters" -> error $ show str
+                                     _ -> error $ show str
+parseAttribute _  c              = error $ "Attribute name index did not point to Utf8 constant. Constant: " ++ (show c)
 
 parseExceptionTable :: Integral a => a -> Get [ExceptionTableEntry]
 parseExceptionTable 0 = return []

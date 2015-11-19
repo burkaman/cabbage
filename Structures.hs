@@ -1,3 +1,5 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+
 module Structures where
 
 import qualified Data.ByteString.Lazy as B
@@ -6,83 +8,81 @@ import Data.Word
 data ClassFile = ClassFile
     { minor_version :: Word16
     , major_version :: Word16
-    , constant_pool :: [CP_Info]
-    , access_flags  :: Word16
+    , constant_pool :: Constant_Pool
+    , cf_access_flags  :: Word16
     , this_class    :: Word16
     , super_class   :: Word16
     , interfaces    :: [Word16]
     , fields        :: [Field_Info]
     , methods       :: [Method_Info]
-    , cf_attributes :: [Attribute_Info]
-    } deriving (Show)
+    , cf_attributes    :: [Attribute_Info]
+    }
 
-data CP_Info = CP_Info
-    { ci_info :: Constant
-    } deriving (Show)
+type Constant_Pool = [Constant]
 
-data Constant = C_Utf8 { utf8_bytes :: B.ByteString }
+data Constant = C_Utf8 { string :: B.ByteString }
 
-              | C_Integer { integer_bytes :: Word32 }
+              | C_Integer { bytes :: Word32 }
 
-              | C_Float { float_bytes :: Word32 }
+              | C_Float { bytes :: Word32 }
 
-              | C_Long { long_high_bytes :: Word32
-                       , long_low_bytes  :: Word32 }
+              | C_Long { high_bytes :: Word32
+                       , low_bytes  :: Word32 }
 
-              | C_Double { double_high_bytes :: Word32
-                         , double_low_bytes  :: Word32 }
+              | C_Double { high_bytes :: Word32
+                         , low_bytes  :: Word32 }
 
-              | C_Class { class_name_index :: Word16 }
+              | C_Class { name_index :: Word16 }
 
-              | C_String { string_string_index :: Word16 }
+              | C_String { string_index :: Word16 }
 
-              | C_Fieldref { fieldref_class_index         :: Word16
-                           , fieldref_name_and_type_index :: Word16 }
+              | C_Fieldref { class_index         :: Word16
+                           , name_and_type_index :: Word16 }
 
-              | C_Methodref { methodref_class_index         :: Word16
-                            , methodref_name_and_type_index :: Word16 }
+              | C_Methodref { class_index         :: Word16
+                            , name_and_type_index :: Word16 }
 
-              | C_InterfaceMethodref { interfacemethodref_class_index         :: Word16
-                                     , interfacemethodref_name_and_type_index :: Word16 }
+              | C_InterfaceMethodref { class_index         :: Word16
+                                     , name_and_type_index :: Word16 }
 
-              | C_NameAndType { nameandtype_name_index       :: Word16
-                              , nameandtype_descriptor_index :: Word16 }
+              | C_NameAndType { name_index       :: Word16
+                              , descriptor_index :: Word16 }
 
-              | C_MethodHandle { methodhandle_reference_kind  :: Word8
-                               , methodhandle_reference_index :: Word16 }
+              | C_MethodHandle { reference_kind  :: Word8
+                               , reference_index :: Word16 }
 
-              | C_MethodType { methodtype_descriptor_index :: Word16 }
+              | C_MethodType { descriptor_index :: Word16 }
 
-              | C_InvokeDynamic { invokedynamic_bootstrap_method_attr_index :: Word16
-                                , invokedynamic_name_and_type_index         :: Word16 }
+              | C_InvokeDynamic { bootstrap_method_attr_index :: Word16
+                                , name_and_type_index         :: Word16 }
               deriving (Show)
 
 data Field_Info = Field_Info
-    { fi_access_flags     :: Word16
-    , fi_name_index       :: Word16
-    , fi_descriptor_index :: Word16
-    , fi_attributes       :: [Attribute_Info]
+    { access_flags     :: Word16
+    , name_index       :: Word16
+    , descriptor_index :: Word16
+    , attributes       :: [Attribute_Info]
     } deriving (Show)
 
 data Method_Info = Method_Info
     { mi_access_flags     :: Word16
-    , mi_name_index       :: Word16
-    , mi_descriptor_index :: Word16
-    , mi_attributes       :: [Attribute_Info]
+    , name_index       :: Word16
+    , descriptor_index :: Word16
+    , attributes       :: [Attribute_Info]
     } deriving (Show)
 
 data Attribute_Info = Attribute_Info
-    { ai_attribute_name_index :: Word16
-    , ai_info                 :: Attribute
+    { attribute_name_index :: Word16
+    , info                 :: Attribute
     } deriving (Show)
 
-data Attribute = A_ConstantValue { constantvalue_index :: Word16 }
+data Attribute = A_ConstantValue { index :: Word16 }
 
                | A_Code { max_stack       :: Word16
                         , max_locals      :: Word16
                         , code            :: B.ByteString
                         , exception_table :: [ExceptionTableEntry]
-                        , code_attributes :: [Attribute_Info] }
+                        , attributes :: [Attribute_Info] }
 
                | A_StackMapTable { entries :: [StackMapFrame] }
 
@@ -136,7 +136,7 @@ data ExceptionTableEntry = ExceptionTableEntry
     } deriving (Show)
 
 data StackMapFrame = StackMapFrame
-    { smf_tag      :: Stack_Map_Frame_Tag
+    { tag      :: Stack_Map_Frame_Tag
     , offset_delta :: Word16
     , locals       :: [Verification_Type_Info]
     , stack        :: [Verification_Type_Info]
@@ -152,8 +152,8 @@ data Stack_Map_Frame_Tag = Same
                          deriving (Show)
 
 data Verification_Type_Info = Verification_Type_Info
-    { vti_tag  :: Verification_Type_Info_tag
-    , vti_info :: Word16 -- cpool_index for Object, or offset for Uninitialized
+    { tag  :: Verification_Type_Info_tag
+    , info :: Word16 -- cpool_index for Object, or offset for Uninitialized
     } deriving (Show)
 
 data Verification_Type_Info_tag = Top
@@ -175,29 +175,29 @@ data InnerClass = InnerClass
     } deriving (Show)
 
 data LineNumberEntry = LineNumberEntry
-    { lne_start_pc    :: Word16
-    , lne_line_number :: Word16
+    { start_pc    :: Word16
+    , line_number :: Word16
     } deriving (Show)
 
 data LocalVariableEntry = LocalVariableEntry
-    { lve_start_pc         :: Word16
-    , lve_length           :: Word16
-    , lve_name_index       :: Word16
-    , lve_descriptor_index :: Word16
-    , lve_index            :: Word16
+    { start_pc         :: Word16
+    , length           :: Word16
+    , name_index       :: Word16
+    , descriptor_index :: Word16
+    , index            :: Word16
     } deriving (Show)
 
 data LocalVariableTypeEntry = LocalVariableTypeEntry
-    { lvte_start_pc        :: Word16
-    , lvte_length          :: Word16
-    , lvte_name_index      :: Word16
-    , lvte_signature_index :: Word16
-    , lvte_index           :: Word16
+    { start_pc        :: Word16
+    , length          :: Word16
+    , name_index      :: Word16
+    , signature_index :: Word16
+    , index           :: Word16
     } deriving (Show)
 
 data Annotation = Annotation
-    { ann_type_index          :: Word16
-    , ann_element_value_pairs :: [ElementValuePair]
+    { type_index          :: Word16
+    , element_value_pairs :: [ElementValuePair]
     } deriving (Show)
 
 data ElementValuePair = ElementValuePair
@@ -206,8 +206,8 @@ data ElementValuePair = ElementValuePair
     } deriving (Show)
 
 data Element_Value = Element_Value
-    { ev_tag   :: ElementValueTag
-    , ev_value :: ElementValueItem
+    { tag   :: ElementValueTag
+    , value :: ElementValueItem
     } deriving (Show)
 
 data ElementValueTag = B | C | D | F | I | J | S | Z | Ss | Ee | Cc | Ann | Arr deriving (Show)
@@ -221,7 +221,7 @@ data ElementValueItem = Const_Value { const_value_index :: Word16 }
 
                       | Annotation_Value { annotation_value :: Annotation }
 
-                      | Array_Value { av_values :: [Element_Value] }
+                      | Array_Value { values :: [Element_Value] }
                       deriving (Show)
 
 data TypeAnnotation = TypeAnnotation
@@ -266,13 +266,13 @@ data PathEntry = PathEntry
     } deriving (Show)
 
 data ParameterAnnotation = ParameterAnnotation
-    { par_annotations :: [Annotation]
+    { annotations :: [Annotation]
     } deriving (Show)
 
 data LocalVarEntry = LocalVarEntry
-    { lvar_start_pc :: Word16
-    , lvar_length   :: Word16
-    , lvar_index    :: Word16
+    { start_pc :: Word16
+    , length   :: Word16
+    , index    :: Word16
     } deriving (Show)
 
 data BootstrapMethodEntry = BootstrapMethodEntry
@@ -281,6 +281,6 @@ data BootstrapMethodEntry = BootstrapMethodEntry
     } deriving (Show)
 
 data Parameter = Parameter
-    { par_name_index   :: Word16
-    , par_access_flags :: Word16
+    { name_index   :: Word16
+    , access_flags :: Word16
     } deriving (Show)
